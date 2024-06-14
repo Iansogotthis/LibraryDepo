@@ -29,7 +29,10 @@ class Book(db.Model):
     publisher = db.Column(db.String(100))
     description = db.Column(db.Text)
 
-db.create_all()
+# Ensure tables are created in the correct context
+with app.app_context():
+    db.create_all()
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -61,7 +64,6 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-
 @app.route('/')
 @login_required
 def index():
@@ -78,14 +80,23 @@ def get_book(book_id):
     return jsonify({'id': book.id, 'title': book.title, 'author': book.author, 'year': book.year, 'isbn': book.isbn})
 
 @app.route('/book', methods=['POST'])
+@login_required
 def add_book():
     data = request.json
-    new_book = Book(title=data['title'], author=data['author'], year=data['year'], isbn=data['isbn'])
+    new_book = Book(
+        title=data['title'],
+        author=data['author'],
+        year=data['year'],
+        isbn=data['isbn'],
+        publisher=data.get('publisher', ''),
+        description=data.get('description', '')
+    )
     db.session.add(new_book)
     db.session.commit()
     return jsonify({'message': 'Book added successfully!'}), 201
 
 @app.route('/book/<int:book_id>', methods=['PUT'])
+@login_required
 def update_book(book_id):
     data = request.json
     book = Book.query.get_or_404(book_id)
@@ -93,6 +104,8 @@ def update_book(book_id):
     book.author = data['author']
     book.year = data['year']
     book.isbn = data['isbn']
+    book.publisher = data.get('publisher', '')
+    book.description = data.get('description', '')
     db.session.commit()
     return jsonify({'message': 'Book updated successfully!'})
 

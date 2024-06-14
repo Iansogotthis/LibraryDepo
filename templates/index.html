@@ -1,60 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Database</title>
-  </head>
-  <body>
+</head>
+<body>
     <h1>Library Database</h1>
     <form id="bookForm">
-      <input type="text" id="title" placeholder="Title" required />
-      <input type="text" id="author" placeholder="Author" required />
-      <input type="number" id="year" placeholder="Year" required />
-      <input type="text" id="isbn" placeholder="ISBN" required />
-      <button type="submit">Add Book</button>
+        <input type="text" id="title" placeholder="Title" required>
+        <input type="text" id="author" placeholder="Author" required>
+        <input type="number" id="year" placeholder="Year" required>
+        <input type="text" id="isbn" placeholder="ISBN" required>
+        <button type="submit">Add Book</button>
     </form>
     <h2>Books</h2>
     <ul id="booksList"></ul>
     <script>
-          document.getElementById('bookForm').addEventListener('submit', function (e) {
-              e.preventDefault();
-              const title = document.getElementById('title').value;
-              const author = document.getElementById('author').value;
-              const year = document.getElementById('year').value;
-              const isbn = document.getElementById('isbn').value;
-              fetch('/book', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ title, author, year, isbn }),
-              })
-              .then(response => response.json())
-              .then(data => {
-                  console.log('Success:', data);
-                  loadBooks();
-              })
-              .catch((error) => {
-                  console.error('Error:', error);
-              });
-          });
+        document.getElementById('bookForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const author = document.getElementById('author').value;
+            const year = document.getElementById('year').value;
+            const isbn = document.getElementById('isbn').value;
+            fetch('/book', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, author, year, isbn }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                loadBooks();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
 
-         function loadBooks() {
-          fetch('/books')
-          .then(response => response.json())
-          .then(data => {
-              const booksList = document.getElementById('bookList');
-              bookList.innerHTML = '';
-              data.forEach(book =>{
-                  const li = document.createElement("li");
-                  li.textContent = `${book.title} by ${book.author} (${book.year})`;
-                  booksList.appendChild(li);`
-              })
-          })
+        function loadBooks() {
+            fetch('/books')
+                .then(response => response.json())
+                .then(data => {
+                    const booksList = document.getElementById('booksList');
+                    booksList.innerHTML = '';
+                    data.forEach(book => {
+                        const li = document.createElement('li');
+                        li.textContent = `${book.title} by ${book.author} (${book.year}) [ISBN: ${book.isbn}]`;
+                        booksList.appendChild(li);
+                    });
+                });
+        }
 
-      }
-          loadBooks();
+        loadBooks();
     </script>
-  </body>
+</body>
 </html>
