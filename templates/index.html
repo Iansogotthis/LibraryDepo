@@ -12,6 +12,8 @@
         <input type="text" id="author" placeholder="Author" required>
         <input type="number" id="year" placeholder="Year" required>
         <input type="text" id="isbn" placeholder="ISBN" required>
+        <input type="text" id="publisher" placeholder="Publisher" required>
+        <input type="text" id="genre" placeholder="Genre" required>
         <button type="submit">Add Book</button>
     </form>
     <h2>Books</h2>
@@ -49,6 +51,21 @@
                     data.forEach(book => {
                         const li = document.createElement('li');
                         li.textContent = `${book.title} by ${book.author} (${book.year}) [ISBN: ${book.isbn}]`;
+                        booksList.appendChild(li);
+                    });
+                });
+        }
+        
+        function searchBooks() {
+            const query = document.getElementById('searchQuery').value;
+            fetch(`/search?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    const booksList = document.getElementById('booksList');
+                    booksList.innerHTML = '';
+                    data.forEach(book => {
+                        const li = document.createElement('li');
+                        li.textContent = `${book.title} by ${book.author} (${book.year}) [ISBN: ${book.isbn}] Publisher: ${book.publisher} Description: ${book.description}`;
                         booksList.appendChild(li);
                     });
                 });

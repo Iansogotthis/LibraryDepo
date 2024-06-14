@@ -26,9 +26,8 @@ class Book(db.Model):
     author = db.Column(db.String(100), nullable=False)
     year = db.Column(db.Integer, nullable=False)
     isbn = db.Column(db.String(13), nullable=False)
-    publisher = db.Column(db.String(100))
+    publisher = db.Column(db.String(100))  
     description = db.Column(db.Text)
-
 # Ensure tables are created in the correct context
 with app.app_context():
     db.create_all()
@@ -38,7 +37,7 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        hashed_password = generate_password_hash(password, method='sha256')
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
         new_user = User(username=username, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
@@ -53,7 +52,8 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
             login_user(user)
-            return redirect(url_for('index'))
+            next_page = request.args.get('next')
+            return render_template('index.html')
         else:
             flash('Login Unsuccessful. Please check your username and password', 'danger')
     return render_template('login.html')
@@ -115,6 +115,27 @@ def delete_book(book_id):
     db.session.delete(book)
     db.session.commit()
     return jsonify({'message': 'Book deleted successfully!'})
+
+@app.route('/search', methods=['GET'])
+@login_required
+def search_books():
+    query = request.args.get('query')
+    if query:
+        results = Book.query.filter(
+            (Book.title.contains(query)) |
+            (Book.author.contains(query)) |
+            (Book.publisher.contains(query))
+        ).all()
+        return jsonify([{
+            'id': book.id,
+            'title': book.title,
+            'author': book.author,
+            'year': book.year,
+            'isbn': book.isbn,
+            'publisher': book.publisher,
+            'description': book.description
+        } for book in results])
+    return jsonify({'message': 'No search query provided.'})
 
 if __name__ == '__main__':
     app.run(debug=True)
