@@ -25,12 +25,14 @@
             const author = document.getElementById('author').value;
             const year = document.getElementById('year').value;
             const isbn = document.getElementById('isbn').value;
+            const publisher = document.getElementById('publisher').value;
+            const description = document.getElementById('description').value;
             fetch('/book', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ title, author, year, isbn }),
+                body: JSON.stringify({ title, author, year, isbn, publisher, description}),
             })
             .then(response => response.json())
             .then(data => {
@@ -50,7 +52,7 @@
                     booksList.innerHTML = '';
                     data.forEach(book => {
                         const li = document.createElement('li');
-                        li.textContent = `${book.title} by ${book.author} (${book.year}) [ISBN: ${book.isbn}]`;
+                        li.textContent = `${book.title} by ${book.author} (${book.year}) [ISBN: ${book.isbn}] published by ${book.publisher} ${book.description}`;
                         booksList.appendChild(li);
                     });
                 });

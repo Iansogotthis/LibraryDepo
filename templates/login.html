@@ -10,6 +10,12 @@
     <form method="POST">
         <input type="text" name="username" placeholder="Username" required>
         <input type="password" name="password" placeholder="Password" required>
+        <input type="checkbox" name="role" value="admin">
+        <label for="role">Admin</label>
+        <input type="checkbox" name="role" value="user">
+        <label for="role">User</label>
+        <input type="checkbox" name="role" value="guest">
+        <label for="role">Guest</label>
         <button type="submit">Login</button>
     </form>
     <a href="{{ url_for('register') }}">Register</a>
