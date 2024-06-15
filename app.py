@@ -1,11 +1,14 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
+from flask_cors import CORS
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='./build', static_url_path='/')
+CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///library.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -23,6 +26,56 @@ class User(UserMixin, db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+@app.route('/')
+@login_required
+def index():
+    return render_template('index.html')
+
+# Serve React static files for non-API routes
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/api/register', methods=['POST'])
+def api_register():
+    data = request.json
+    username = data['username']
+    password = data['password']
+    role = data.get('role', 'user')
+    hashed_password = generate_password_hash(password, method='sha256')
+    new_user = User(username=username, password=hashed_password, role=role)
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({'message': 'User registered successfully!'})
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.json
+    username = data['username']
+    password = data['password']
+    user = User.query.filter_by(username=username).first()
+    if user and check_password_hash(user.password, password):
+        login_user(user)
+        return jsonify({'id': user.id, 'username': user.username, 'role': user.role})
+    else:
+        return jsonify({'message': 'Invalid credentials'}), 401
+
+@app.route('/api/logout', methods=['POST'])
+@login_required
+def api_logout():
+    logout_user()
+    return jsonify({'message': 'Logged out successfully!'})
+
+@app.route('/api/current_user')
+def api_current_user():
+    if current_user.is_authenticated:
+        return jsonify({'id': current_user.id, 'username': current_user.username, 'role': current_user.role})
+    else:
+        return jsonify({'message': 'No user logged in'}), 401
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -55,11 +108,6 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
-
-@app.route('/')
-@login_required
-def index():
-    return render_template('index.html')
 
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -167,7 +215,7 @@ def search_books():
         } for book in results])
     return jsonify({'message': 'No search query provided.'})
 
-app.route('/borrow/<int:book_id>', methods=['POST'])
+@app.route('/borrow/<int:book_id>', methods=['POST'])
 @login_required
 def borrow_book(book_id):
     book = Book.query.get_or_404(book_id)
